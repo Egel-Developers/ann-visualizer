@@ -2,7 +2,7 @@ import type { Neuron, Connection } from '$lib/models/ann';
 import { numToGrayscale, numToRedGreen } from '$lib/scripts/numToColor';
 import { activation } from '$lib/scripts/activation-function';
 
-type DrawOptions = {
+export type DrawOptions = {
 	neuronRadius: number;
 	verSpace: number;
 
@@ -40,9 +40,6 @@ export function drawLayer(
 		if (!ctx) return;
 		ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-		// Calculate container dimensions and offsets
-		options = calcDimensionsOffsets(activations, options);
-
 		// Create the input neurons
 		const inputNeurons = createInputNeurons(activations, options);
 
@@ -59,22 +56,27 @@ export function drawLayer(
 	}
 }
 
-function calcDimensionsOffsets(activations: number[], options: DrawOptions): DrawOptions {
-	options.totalWidth = 800;
-	options.totalHeight =
-		activations.length * options.neuronRadius * 2 + options.verSpace * (activations.length - 1);
+export function calcDimensionsAndOffsets(
+	activations: number[],
+	canvasWidth: number,
+	canvasHeight: number,
+	neuronRadius: number,
+	verSpace: number
+): DrawOptions {
+	const totalWidth = 800;
+	const totalHeight = activations.length * neuronRadius * 2 + verSpace * (activations.length - 1);
 
-	const dimensions = [document.documentElement.clientWidth, document.documentElement.clientHeight];
+	const horOffset = canvasWidth / 2 - totalWidth / 2;
+	const verOffset = canvasHeight / 2 - totalHeight / 2;
 
-	options.horOffset = dimensions[0] / 2 - options.totalWidth / 2;
-	options.verOffset = dimensions[1] / 2 - options.totalHeight / 2;
-
-	// Draw the container
-	// ctx.beginPath();
-	// ctx.rect(horOffset, verOffset, totalWidth, totalHeight);
-	// ctx.stroke();
-
-	return options;
+	return {
+		neuronRadius,
+		verSpace,
+		horOffset,
+		verOffset,
+		totalWidth,
+		totalHeight
+	};
 }
 
 function createInputNeurons(activations: number[], options: DrawOptions): Neuron[] {
