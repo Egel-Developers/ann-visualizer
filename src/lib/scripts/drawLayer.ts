@@ -1,6 +1,7 @@
 import type { Neuron, Connection } from '$lib/models/ann';
 import { numToGrayscale, numToRedGreen } from '$lib/scripts/numToColor';
 import { activation } from '$lib/scripts/activation-function';
+import type { Parameters } from '$lib/models/parameters';
 
 export type DrawOptions = {
 	neuronRadius: number;
@@ -15,9 +16,7 @@ export type DrawOptions = {
 // NOTE: Draws single layer, with one output neuron
 export function drawLayer(
 	canvasEl: HTMLCanvasElement,
-	activations: number[],
-	weights: number[],
-	bias: number,
+	parameters: Parameters,
 	options: DrawOptions = {
 		neuronRadius: 50,
 		verSpace: 50,
@@ -29,9 +28,12 @@ export function drawLayer(
 ) {
 	try {
 		// Run some checks
+		if (!parameters) throw new Error('Must supply parameters');
+		const { activations, weights, bias } = parameters;
+
 		if (!canvasEl) return;
-		if (!activations.length || !weights.length)
-			throw new Error('Must supply activations and weights');
+		if (!activations.length || !weights.length || bias == undefined)
+			throw new Error('Must supply activations, weights and bias');
 		if (activations.length !== weights.length)
 			throw new Error('Must have the same number of activations and weights');
 
@@ -148,6 +150,7 @@ function draw(
 		if (weight) {
 			ctx.strokeStyle = numToRedGreen(weight);
 			ctx.lineWidth = width;
+			ctx.setLineDash([0, 0]);
 		} else {
 			ctx.strokeStyle = 'black';
 			ctx.lineWidth = 1;
