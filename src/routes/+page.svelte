@@ -77,10 +77,10 @@
 </script>
 
 <div class="flex">
-	<div class="w-1/5 bg-blue-400 overflow-y-auto h-screen">
-		<form class="flex flex-col gap-8 p-12">
+	<div class="flex flex-col w-1/5 bg-blue-400 h-screen">
+		<form class="flex flex-col gap-8 p-8 overflow-y-auto">
 			<section>
-				<h2 class="text-xl font-semibold">Neuronen</h2>
+				<h2 class="text-xl font-semibold mb-2">Neuronen</h2>
 				<div class="flex gap-4 justify-between">
 					<label class="" for="nodeCount">Aantal input neuronen</label>
 					<input
@@ -95,7 +95,7 @@
 			</section>
 
 			<section>
-				<h2 class="text-xl font-semibold">Biases</h2>
+				<h2 class="text-xl font-semibold mb-2">Biases</h2>
 				<div class="flex gap-4 justify-between">
 					<label class="w-24" for="bias"><i>b</i> = {$parameters.bias}</label>
 					<input
@@ -110,7 +110,7 @@
 			</section>
 
 			<section>
-				<h2 class="text-xl font-semibold">Activations</h2>
+				<h2 class="text-xl font-semibold mb-2">Activations</h2>
 				{#each Array(nodeCount) as _, i}
 					<div class="flex gap-2 justify-between">
 						<label class="w-24" for={`activation-${i}`}
@@ -129,7 +129,7 @@
 			</section>
 
 			<section>
-				<h2 class="text-xl font-semibold">Weights</h2>
+				<h2 class="text-xl font-semibold mb-2">Weights</h2>
 				{#each Array(nodeCount) as _, i}
 					<div class="flex gap-2 justify-between">
 						<label class="w-24" for={`weight-${i}`}
@@ -147,6 +147,30 @@
 				{/each}
 			</section>
 		</form>
+
+		<article class="flex flex-col gap-2 mt-auto px-8 py-4 bg-blue-500">
+			<h2 class="text-xl font-semibold">Legenda</h2>
+			<div class="flex items-center gap-4">
+				<span class="rounded-full h-4 w-4 bg-black" />
+				Minimale activation
+			</div>
+			<div class="flex items-center gap-4">
+				<span class="rounded-full h-4 w-4 bg-white" />
+				Maximale activation
+			</div>
+			<div class="flex items-center gap-4">
+				<span class="h-1 w-4 bg-red-500" />
+				Negatieve weight
+			</div>
+			<div class="flex items-center gap-4">
+				<span class="h-1 w-4 bg-lime-500" />
+				Positieve weight
+			</div>
+			<div class="flex items-center gap-4">
+				<span class="w-4 border-t-2 border-dashed border-black" />
+				Geen weight
+			</div>
+		</article>
 	</div>
 	<canvas bind:this={canvasEl} class="h-screen" />
 </div>
