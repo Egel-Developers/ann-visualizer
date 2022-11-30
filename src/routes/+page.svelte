@@ -13,9 +13,12 @@
 	let nodeCount: number = 5;
 	let options: DrawOptions;
 
+	let canvasWidth: number;
+	let canvasHeight: number;
+
 	setParameters({
-		activations: [0.22, 0.78, 0.34, 0.55, 1],
-		weights: [-4, 2, 6, -7, 0],
+		activations: new Array(5).fill(0),
+		weights: new Array(5).fill(0),
 		bias: 5
 	});
 
@@ -26,33 +29,27 @@
 			formatAndSetParameters($inputParameters);
 
 			drawLayer(canvasEl, $parameters, options);
+
+			redrawCanvas();
 		}
 	}
 
 	// Canvas code
 	let canvasEl: HTMLCanvasElement;
 
-	function resizeCanvas() {
+	function redrawCanvas() {
 		if (!canvasEl) return;
 
-		// Make the canvas fill the screen
-		canvasEl.width = document.documentElement.clientWidth * (4 / 5);
-		canvasEl.height = document.documentElement.clientHeight;
-
 		// Calculate all the relevant dimensions and offsets for the canvas
-		options = calcDimensionsAndOffsets(
-			$parameters.activations,
-			canvasEl.width,
-			canvasEl.height,
-			50,
-			50
-		);
+		options = calcDimensionsAndOffsets($parameters.activations.length, canvasWidth, canvasHeight);
 
 		// Draw the ANN layer
 		drawLayer(canvasEl, $parameters, options);
 	}
 
 	function updateParameters() {
+		nodeCount = Math.max(1, nodeCount);
+
 		$inputParameters.activations = $inputParameters.activations.slice(0, nodeCount - 1);
 		$inputParameters.weights = $inputParameters.weights.slice(0, nodeCount - 1);
 
@@ -67,51 +64,89 @@
 	}
 
 	onMount(() => {
-		resizeCanvas();
+		redrawCanvas();
 
-		window.addEventListener('resize', resizeCanvas);
+		canvasWidth = window.innerWidth * 0.8;
+		canvasHeight = window.innerHeight;
+
+		canvasEl.width = canvasWidth;
+		canvasEl.height = canvasHeight;
+
+		window.addEventListener('resize', redrawCanvas);
 	});
 </script>
 
 <div class="flex">
-	<div class="w-1/5 bg-blue-400">
+	<div class="w-1/5 bg-blue-400 overflow-y-auto h-screen">
 		<form class="flex flex-col gap-8 p-12">
-			<div class="flex flex-col gap-2">
-				<label for="nodeCount">Aantal input neuronen</label>
-				<input type="number" name="nodeCount" bind:value={nodeCount} on:input={updateParameters} />
-			</div>
-
-			<div class="flex flex-col gap-2">
-				<label for={`bias`}>Bias</label>
-				<input type="range" min="-10" max="10" name="bias" bind:value={$inputParameters.bias} />
-			</div>
-
-			{#each Array(nodeCount) as _, i}
-				<div class="flex flex-col gap-2">
-					<label for={`activation-${i}`}>Activation {i}</label>
+			<section>
+				<h2 class="text-xl font-semibold">Neuronen</h2>
+				<div class="flex gap-4 justify-between">
+					<label class="" for="nodeCount">Aantal input neuronen</label>
 					<input
-						type="range"
-						min="0"
-						max="10"
-						name={`activation-${i}`}
-						bind:value={$inputParameters.activations[i]}
+						class="w-24 pl-2 rounded-sm outline-none border-2 border-transparent focus:border-gray-400 transition"
+						type="number"
+						name="nodeCount"
+						min="1"
+						bind:value={nodeCount}
+						on:input={updateParameters}
 					/>
 				</div>
-			{/each}
+			</section>
 
-			{#each Array(nodeCount) as _, i}
-				<div class="flex flex-col gap-2">
-					<label for={`weight-${i}`}>Weight {i}</label>
+			<section>
+				<h2 class="text-xl font-semibold">Biases</h2>
+				<div class="flex gap-4 justify-between">
+					<label class="w-24" for="bias"><i>b</i> = {$parameters.bias}</label>
 					<input
+						class="w-full"
 						type="range"
 						min="-10"
 						max="10"
-						name={`weight-${i}`}
-						bind:value={$inputParameters.weights[i]}
+						name="bias"
+						bind:value={$inputParameters.bias}
 					/>
 				</div>
-			{/each}
+			</section>
+
+			<section>
+				<h2 class="text-xl font-semibold">Activations</h2>
+				{#each Array(nodeCount) as _, i}
+					<div class="flex gap-2 justify-between">
+						<label class="w-24" for={`activation-${i}`}
+							><i>a<sub>{i}</sub></i> = {$parameters.activations[i]}</label
+						>
+						<input
+							class="w-full"
+							type="range"
+							min="0"
+							max="10"
+							name={`activation-${i}`}
+							bind:value={$inputParameters.activations[i]}
+						/>
+					</div>
+				{/each}
+			</section>
+
+			<section>
+				<h2 class="text-xl font-semibold">Weights</h2>
+				{#each Array(nodeCount) as _, i}
+					<div class="flex gap-2 justify-between">
+						<label class="w-24" for={`weight-${i}`}
+							><i>w<sub>{i}</sub></i> = {$parameters.weights[i]}</label
+						>
+						<input
+							class="w-full"
+							type="range"
+							min="-10"
+							max="10"
+							name={`weight-${i}`}
+							bind:value={$inputParameters.weights[i]}
+						/>
+					</div>
+				{/each}
+			</section>
 		</form>
 	</div>
-	<canvas bind:this={canvasEl} />
+	<canvas bind:this={canvasEl} class="h-screen" />
 </div>

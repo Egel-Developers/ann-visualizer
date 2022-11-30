@@ -59,21 +59,21 @@ export function drawLayer(
 }
 
 export function calcDimensionsAndOffsets(
-	activations: number[],
+	neuronCount: number,
 	canvasWidth: number,
-	canvasHeight: number,
-	neuronRadius: number,
-	verSpace: number
+	canvasHeight: number
 ): DrawOptions {
+	const radius = calcNeuronRadius(neuronCount, canvasHeight);
+
 	const totalWidth = 800;
-	const totalHeight = activations.length * neuronRadius * 2 + verSpace * (activations.length - 1);
+	const totalHeight = neuronCount * radius * 2 + radius * (neuronCount - 1);
 
 	const horOffset = canvasWidth / 2 - totalWidth / 2;
 	const verOffset = canvasHeight / 2 - totalHeight / 2;
 
 	return {
-		neuronRadius,
-		verSpace,
+		neuronRadius: radius,
+		verSpace: radius,
 		horOffset,
 		verOffset,
 		totalWidth,
@@ -179,4 +179,8 @@ function draw(
 	ctx.fillStyle = numToGrayscale(outputNeuron.activation);
 	ctx.fill();
 	ctx.stroke();
+}
+
+function calcNeuronRadius(neuronCount: number, totalHeight: number) {
+	return Math.min(totalHeight / (neuronCount * 3 + 1), 100);
 }
