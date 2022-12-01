@@ -5,7 +5,7 @@
 	const ANN = new NeuralNetwork([2, 1], SquashingFunction.Sigmoid);
 
 	try {
-		ANN.setInputLayerActivations([0.2, 0.5]);
+		ANN.setInputLayerActivations([0.7, 0.5]);
 		ANN.feedForward();
 	} catch (e) {
 		console.error(e);

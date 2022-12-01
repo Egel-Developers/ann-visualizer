@@ -1,5 +1,5 @@
 import Algorithms from '$lib/models/Algorithms';
-import SquashingFunction from '$lib/enums/SquashingFunction';
+import type SquashingFunction from '$lib/enums/SquashingFunction';
 
 class Neuron {
 	activation = 0;
