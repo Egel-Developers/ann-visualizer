@@ -1,38 +1,11 @@
-# create-svelte
+# activation-function
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+A clean visualization for a single layer and output neuron in an artificial neural network. Change all the parameters using the sidebar and the visualization will update automatically.
 
-## Creating a project
+# Functionality
 
-If you're seeing this, you've probably already done this step. Congrats!
+The neural network uses the weighted sum, together with a squashing function (the sigmoid function in this case), to calculate the activation of the output neuron.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+# UI
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+![image](https://user-images.githubusercontent.com/108586405/204862228-2321cd44-8264-417e-bd06-6995ef99b2da.png)
