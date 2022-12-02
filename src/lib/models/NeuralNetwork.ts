@@ -12,7 +12,7 @@ class Neuron {
 }
 
 class Connection {
-	weight = 1;
+	weight: number;
 
 	// Initialize the connection with a weight (default of 1)
 	constructor(weight = 1) {
@@ -20,9 +20,14 @@ class Connection {
 	}
 }
 
+export type NeuralNetworkState = {
+	layers: Neuron[][];
+	connections: Connection[][];
+};
+
 export default class NeuralNetwork {
-	#connections: Connection[][] = [];
 	#layers: Neuron[][] = [];
+	#connections: Connection[][] = [];
 	#squashingFunction: SquashingFunction;
 
 	// Initialize the neural network with a number of layers and neurons per layer
@@ -36,7 +41,7 @@ export default class NeuralNetwork {
 	}
 
 	// Get the neural network in its current state
-	getNeuralNetwork() {
+	getNeuralNetwork(): NeuralNetworkState {
 		return {
 			layers: this.#layers,
 			connections: this.#connections
@@ -118,13 +123,13 @@ export default class NeuralNetwork {
 	// Set the input layer's activations
 	setInputLayerActivations(activations: number[]) {
 		// #region Error handling
-		if (activations.length !== this.#layers[0].length) {
+		if (activations.length !== this.#layers[0].length)
 			throw new Error(
 				`NeuralNetwork.setInputLayerActivations: Number of activations does not match number of neurons in the input layer. Provided: ${
 					activations.length
 				}, expected: ${this.#layers[0].length}`
 			);
-		}
+
 		// #endregion
 
 		// Loop over all the neurons in the input layer
@@ -151,19 +156,19 @@ export default class NeuralNetwork {
 		// #region Error handling
 		if (layerIndex < 0)
 			throw new Error(
-				`NeuralNetwork.calcActivation: Layer index out of bounds. Provided index: ${layerIndex}, min index: 1`
+				`NeuralNetwork.#calcActivation: Layer index out of bounds. Provided index: ${layerIndex}, min index: 1`
 			);
 		if (layerIndex == 0)
 			throw new Error(`NeuralNetwork.calcActivation: Cannot calculate activation for input layer`);
 		if (layerIndex > this.#layers.length - 1)
 			throw new Error(
-				`NeuralNetwork.calcActivation: Layer index out of bounds. Provided index: ${layerIndex}, max index: ${
+				`NeuralNetwork.#calcActivation: Layer index out of bounds. Provided index: ${layerIndex}, max index: ${
 					this.#layers.length - 1
 				}`
 			);
 		if (neuronIndex > this.#layers[layerIndex].length - 1)
 			throw new Error(
-				`NeuralNetwork.calcActivation: Neuron index out of bounds. Provided index: ${neuronIndex}, max index: ${
+				`NeuralNetwork.#calcActivation: Neuron index out of bounds. Provided index: ${neuronIndex}, max index: ${
 					this.#layers[layerIndex].length - 1
 				}, in layer: ${layerIndex}`
 			);
