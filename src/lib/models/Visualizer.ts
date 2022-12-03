@@ -46,6 +46,9 @@ export default class Visualizer {
 
 	// Draw the neural network
 	draw() {
+		// Clear the canvas
+		this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+
 		// Calculate the dimensions and offsets
 		this.#drawOptions = this.#calcDimensionsAndOffsets(this.#neuralNetwork, this.#canvas);
 

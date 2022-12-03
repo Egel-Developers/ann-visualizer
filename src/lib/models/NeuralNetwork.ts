@@ -39,6 +39,11 @@ export default class NeuralNetwork {
 		return this.#layers;
 	}
 
+	// Update the neural network
+	updateNeuralNetwork(neuralNetwork: Neuron[][]) {
+		this.#layers = neuralNetwork;
+	}
+
 	// Set a specific weight for a connection
 	setWeight(layerIndex: number, neuronIndex: number, connectionIndex: number, weight: number) {
 		// #region Error handling
@@ -210,32 +215,4 @@ export default class NeuralNetwork {
 
 		return layers;
 	}
-
-	// Initialize the connections between the layers of the neural network
-	// #createConnections(layers: Neuron[][]): Connection[][][] {
-	// 	let connections: Connection[][][] = [];
-
-	// 	// Loop over all layers except the first one
-	// 	for (let n = 1; n < layers.length; n++) {
-	// 		let layerConnections: Connection[][] = [];
-
-	// 		// Loop through all neurons in the current layer
-	// 		for (let j = 0; j < layers[n].length; j++) {
-	// 			let neuronConnections: Connection[] = [];
-
-	// 			// Loop through all neurons in the previous layer
-	// 			for (let k = 0; k < layers[n - 1].length; k++) {
-	// 				// Add a connection between the current neuron and the previous neuron
-	// 				neuronConnections = [...neuronConnections, new Connection()];
-	// 			}
-
-	// 			layerConnections = [...layerConnections, neuronConnections];
-	// 		}
-
-	// 		// Append the layerConnections array to the connections array
-	// 		connections = [...connections, layerConnections];
-	// 	}
-
-	// 	return connections;
-	// }
 }
