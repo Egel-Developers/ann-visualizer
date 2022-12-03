@@ -46,6 +46,8 @@ export default class Visualizer {
 
 	// Draw the neural network
 	draw() {
+		console.log('Drawing!');
+
 		// Clear the canvas
 		this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
 

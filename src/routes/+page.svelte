@@ -8,17 +8,20 @@
 
 	import { onMount } from 'svelte';
 
+	// Update the neural network state, whenever any of the input values change
 	$: $inputValues, update();
 
 	let canvasEl: HTMLCanvasElement;
 	let VIS: Visualizer;
 
+	// Instantiate the default neural network
 	let ANN = new NeuralNetwork([2, 4, 1], SquashingFunction.Sigmoid);
 	ANN.feedForward();
 
 	// Initialize all the input values, based on the default neural network state
 	fromNeuralNetwork(ANN.getNeuralNetwork());
 
+	// Get the initial layerCount and layerSizes, to use in the input fields as default values
 	let layerCount = ANN.getNeuralNetwork().length;
 	let layerSizes = ANN.getNeuralNetwork().map((layer) => layer.length);
 
@@ -53,6 +56,7 @@
 		VIS.draw();
 	}
 
+	// Randomize the neural network
 	function randomize() {
 		// Randomize the neural network structure
 		layerSizes = [];
@@ -98,18 +102,25 @@
 		update();
 	}
 
-	// Draw the neural network onMount
 	onMount(() => {
-		canvasEl.width = window.innerWidth * 0.8;
-		canvasEl.height = window.innerHeight;
+		draw();
+		window.addEventListener('resize', draw);
+	});
 
+	// (Re)draws the neural network
+	function draw() {
 		try {
+			if (!canvasEl) return;
+
+			canvasEl.width = window.innerWidth * 0.8;
+			canvasEl.height = window.innerHeight;
+
 			VIS = new Visualizer(canvasEl, ANN.getNeuralNetwork());
 			VIS.draw();
 		} catch (e) {
-			console.error(e);
+			console.log(e);
 		}
-	});
+	}
 </script>
 
 <div class="flex">
