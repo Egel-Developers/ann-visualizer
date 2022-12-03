@@ -61,7 +61,7 @@ export default class Visualizer {
 				// Loop over all the neurons in the previous layer
 				for (let k = 0; k < this.#neuronPositions[i - 1].length; k++) {
 					// Get the corresponding connection's weight
-					const weight = this.#neuralNetwork.connections[i - 1][j + k].weight;
+					const weight = this.#neuralNetwork.connections[i - 1][k][j].weight;
 
 					// Draw the connection between the two neurons
 					DrawUtils.drawConnection(

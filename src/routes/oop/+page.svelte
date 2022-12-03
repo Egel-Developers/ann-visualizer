@@ -15,7 +15,7 @@
 
 		try {
 			ANN.setInputLayerActivations([1, 1, 1]);
-			ANN.setWeight(0, 3, -5);
+			ANN.setWeight(2, 5, 1, 10);
 			ANN.feedForward();
 
 			const VIS = new Visualizer(canvasEl, ANN.getNeuralNetwork());

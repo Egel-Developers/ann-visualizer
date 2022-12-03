@@ -8,6 +8,13 @@ export default class Algorithms {
 		bias: number,
 		squashingFunction: SquashingFunction
 	) {
+		// #region Error handling
+		if (activations.length !== weights.length)
+			throw new Error(
+				`Algorithms.activation: Amount of activations and weights do not match. Activations: ${activations.length}, weights: ${weights.length}`
+			);
+		// #endregion
+
 		// Calculate the weighted sum
 		const sum = this.#weightedSum(weights, activations, bias);
 
