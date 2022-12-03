@@ -1,4 +1,4 @@
-import type { Position } from '$lib/models/Positions';
+import type { Position } from '$lib/models/Position';
 
 export default class DrawUtils {
 	// Draws a neuron at a given position, with a given radius and fill color
@@ -21,13 +21,13 @@ export default class DrawUtils {
 		position1: Position,
 		position2: Position,
 		width: number,
-		strokeColor: string
+		strokeColor?: string
 	) {
 		ctx.beginPath();
 		ctx.moveTo(position1.x, position1.y);
 		ctx.lineTo(position2.x, position2.y);
 
-		if (width) {
+		if (width && strokeColor) {
 			ctx.strokeStyle = strokeColor;
 			ctx.lineWidth = width;
 			ctx.setLineDash([0, 0]);

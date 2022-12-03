@@ -36,8 +36,8 @@ export default class Algorithms {
 		let sum = 0;
 
 		// Multiply every activation with its corresponding weight and add it to the sum
-		for (let i = 0; i < activations.length; i++) {
-			sum += activations[i] * weights[i];
+		for (let n = 0; n < activations.length; n++) {
+			sum += activations[n] * weights[n];
 		}
 
 		// Add the bias to the sum and return it

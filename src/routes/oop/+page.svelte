@@ -8,20 +8,20 @@
 	let canvasEl: HTMLCanvasElement;
 
 	onMount(() => {
-		canvasEl.width = window.innerWidth;
+		canvasEl.width = window.innerWidth * 0.8;
 		canvasEl.height = window.innerHeight;
 
-		const ANN = new NeuralNetwork([3, 2, 6, 2, 3], SquashingFunction.Sigmoid);
-
 		try {
-			ANN.setInputLayerActivations([1, 1, 1]);
-			ANN.setWeight(2, 5, 1, 10);
+			const ANN = new NeuralNetwork([3, 2, 6, 2, 3], SquashingFunction.Sigmoid);
+
+			ANN.setInputLayerActivations([0.5, 1, 1]);
+			ANN.setWeight(2, 1, 0, -5);
 			ANN.feedForward();
+
+			console.log(ANN.getNeuralNetwork());
 
 			const VIS = new Visualizer(canvasEl, ANN.getNeuralNetwork());
 			VIS.draw();
-
-			console.log(ANN.getNeuralNetwork());
 		} catch (e) {
 			console.error(e);
 		}

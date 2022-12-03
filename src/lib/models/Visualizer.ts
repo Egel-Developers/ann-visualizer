@@ -1,9 +1,10 @@
 import DrawUtils from '$lib/models/DrawUtils';
-import type { NeuralNetworkState } from '$lib/models/NeuralNetwork';
-import type { Position } from '$lib/models/Positions';
+import type { Position } from '$lib/models/Position';
+import type { Neuron } from '$lib/models/NeuralNetwork';
 
 type DrawOptions = {
 	neuronRadius: number;
+	layerDistance: number;
 
 	horOffset: number;
 	verOffset: number;
@@ -12,11 +13,12 @@ type DrawOptions = {
 };
 
 export default class Visualizer {
-	#neuralNetwork: NeuralNetworkState;
+	#neuralNetwork: Neuron[][];
 	#canvas: HTMLCanvasElement;
 	#ctx: CanvasRenderingContext2D;
 	#drawOptions: DrawOptions = {
 		neuronRadius: 0,
+		layerDistance: 0,
 		horOffset: 0,
 		verOffset: 0,
 		totalWidth: 0,
@@ -25,10 +27,7 @@ export default class Visualizer {
 	#neuronPositions: Position[][] = [];
 
 	// Initialize the visualizer with a canvas element and an optional neural network
-	constructor(
-		canvas: HTMLCanvasElement,
-		neuralNetwork: NeuralNetworkState = { layers: [], connections: [] }
-	) {
+	constructor(canvas: HTMLCanvasElement, neuralNetwork: Neuron[][] = []) {
 		// #region Error handling
 		if (!canvas) throw new Error('Visualizer.constructor: No (valid) canvas provided');
 		// #endregion
@@ -53,58 +52,84 @@ export default class Visualizer {
 		// Calculate the positions of the neurons
 		this.#neuronPositions = this.#calcNeuronPositions(this.#neuralNetwork);
 
-		// Draw the connections
-		// Loop over all the layers of neuron positions except the first
-		for (let i = 1; i < this.#neuronPositions.length; i++) {
-			// Loop over all the neurons in the layer
-			for (let j = 0; j < this.#neuronPositions[i].length; j++) {
-				// Loop over all the neurons in the previous layer
-				for (let k = 0; k < this.#neuronPositions[i - 1].length; k++) {
-					// Get the corresponding connection's weight
-					const weight = this.#neuralNetwork.connections[i - 1][k][j].weight;
+		// Get the right values for the drawing
+		const neuralNetwork = this.#neuralNetwork;
+		const neuronPositions = this.#neuronPositions;
+		const drawOptions = this.#drawOptions;
+		const ctx = this.#ctx;
 
-					// Draw the connection between the two neurons
+		// Draw all connections
+		// Loop over all layers of neurons except the first one
+		for (let n = 1; n < neuralNetwork.length; n++) {
+			const currentLayer = neuralNetwork[n];
+			const prevLayer = neuralNetwork[n - 1];
+
+			// Loop over all neurons in the current layer
+			for (let j = 0; j < currentLayer.length; j++) {
+				// Loop over all neurons in the previous layer
+				for (let k = 0; k < prevLayer.length; k++) {
+					// Get the connection's weight
+					const weight = currentLayer[j].connections[k].weight;
+
+					// Draw the connection between the current and previous neuron
 					DrawUtils.drawConnection(
-						this.#ctx,
-						this.#neuronPositions[i - 1][k],
-						this.#neuronPositions[i][j],
+						ctx,
+						neuronPositions[n - 1][k],
+						neuronPositions[n][j],
 						Math.abs(weight),
-						DrawUtils.numToRedGreen(weight)
+						weight ? DrawUtils.numToRedGreen(weight) : undefined
 					);
 				}
 			}
 		}
 
 		// Reset the line stroke styles
-		DrawUtils.resetLineStroke(this.#ctx);
+		DrawUtils.resetLineStroke(ctx);
 
-		// Draw the neurons
-		// Loop over all the layers of neuron positions
-		for (let i = 0; i < this.#neuronPositions.length; i++) {
-			// Loop over all the neurons in the layer
-			for (let j = 0; j < this.#neuronPositions[i].length; j++) {
+		// Draw all neurons
+		// Loop over all layers of neurons
+		for (let n = 0; n < neuralNetwork.length; n++) {
+			const currentLayer = neuralNetwork[n];
+
+			// Loop over the neurons in the current layer
+			for (let j = 0; j < currentLayer.length; j++) {
 				// Draw the neuron
 				DrawUtils.drawNeuron(
-					this.#ctx,
-					this.#neuronPositions[i][j],
-					this.#drawOptions.neuronRadius,
-					DrawUtils.numToGrayscale(this.#neuralNetwork.layers[i][j].activation)
+					ctx,
+					neuronPositions[n][j],
+					drawOptions.neuronRadius,
+					DrawUtils.numToGrayscale(neuralNetwork[n][j].activation)
 				);
 			}
 		}
 	}
 
-	#calcNeuronPositions(neuralNetwork: NeuralNetworkState) {
+	// Updates the neural network used for drawing
+	updateNeuralNetwork(neuralNetwork: Neuron[][]) {
+		this.#neuralNetwork = neuralNetwork;
+	}
+
+	// Calculate all neuron x and y positions on the canvas in pixels
+	#calcNeuronPositions(neuralNetwork: Neuron[][]) {
+		const { neuronRadius, totalHeight } = this.#drawOptions;
+
 		let neuronPositions: Position[][] = [];
 
 		// Loop over all layers in the neural network
-		for (let i = 0; i < neuralNetwork.layers.length; i++) {
+		for (let n = 0; n < neuralNetwork.length; n++) {
 			let neuronPositionsLayer: Position[] = [];
 
+			// Calculate the layer height and vertical offset
+			const layerHeight = this.#calcLayerHeight(neuralNetwork[n].length, neuronRadius);
+			const layerVerOffset = totalHeight / 2 - layerHeight / 2;
+
 			// Loop over all neurons in the layer
-			for (let j = 0; j < neuralNetwork.layers[i].length; j++) {
+			for (let j = 0; j < neuralNetwork[n].length; j++) {
 				// Calculate the position of the neuron and add it to the array
-				neuronPositionsLayer = [...neuronPositionsLayer, this.#calcNeuronPosition(i, j)];
+				neuronPositionsLayer = [
+					...neuronPositionsLayer,
+					this.#calcNeuronPosition(n, j, layerVerOffset)
+				];
 			}
 
 			// Add the layer of positions to the array
@@ -114,31 +139,26 @@ export default class Visualizer {
 		return neuronPositions;
 	}
 
-	#calcNeuronPosition(layerIndex: number, neuronIndex: number): Position {
+	// Calculate the x and y position on the canvas in pixels of a single neuron (center of the neuron)
+	#calcNeuronPosition(layerIndex: number, neuronIndex: number, layerVerOffset: number): Position {
 		// #region Error handling
 		if (layerIndex < 0) throw new Error('Visualizer.#calcNeuronPosition: layerIndex must be >= 0');
 		if (neuronIndex < 0)
 			throw new Error('Visualizer.#calcNeuronPosition: neuronIndex must be >= 0');
-		if (layerIndex >= this.#neuralNetwork.layers.length)
+		if (layerIndex >= this.#neuralNetwork.length)
 			throw new Error(
-				`Visualizer.#calcNeuronPosition: layerIndex must be < ${this.#neuralNetwork.layers.length}`
+				`Visualizer.#calcNeuronPosition: layerIndex must be < ${this.#neuralNetwork.length}`
 			);
-		if (neuronIndex >= this.#neuralNetwork.layers[layerIndex].length)
+		if (neuronIndex >= this.#neuralNetwork[layerIndex].length)
 			throw new Error(
 				`Visualizer.#calcNeuronPosition: neuronIndex must be < ${
-					this.#neuralNetwork.layers[layerIndex].length
+					this.#neuralNetwork[layerIndex].length
 				}`
 			);
 		// #endregion
 
 		// Get all the necessary values for the position calculations
-		const { neuronRadius, horOffset, verOffset, totalHeight } = this.#drawOptions;
-		const layerDistance = this.#calcLayerDistance(this.#neuralNetwork.layers.length);
-		const layerSize = this.#neuralNetwork.layers[layerIndex].length;
-
-		// Calculate the layer height and vertical offset
-		const layerHeight = this.#calcLayerHeight(layerSize, neuronRadius);
-		const layerVerOffset = totalHeight / 2 - layerHeight / 2;
+		const { neuronRadius, layerDistance, horOffset, verOffset } = this.#drawOptions;
 
 		// Calculate the neuron position and return it
 		return {
@@ -147,30 +167,24 @@ export default class Visualizer {
 		};
 	}
 
-	#calcDimensionsAndOffsets(
-		neuralNetwork: NeuralNetworkState,
-		canvas: HTMLCanvasElement
-	): DrawOptions {
+	// Calculate all the necessary dimensions and offsets used for drawing the neural network
+	#calcDimensionsAndOffsets(neuralNetwork: Neuron[][], canvas: HTMLCanvasElement): DrawOptions {
 		// #region Error handling
-		if (neuralNetwork.layers.length < 2)
+		if (neuralNetwork.length < 2)
 			throw new Error(
-				`Visualizer.#calcDimensionsAndOffsets: The neural network must have at least 2 layers, provided: ${neuralNetwork.layers.length}`
-			);
-		if (neuralNetwork.connections.length !== neuralNetwork.layers.length - 1)
-			throw new Error(
-				`Visualizer.#calcDimensionsAndOffsets: The neural network must have a layer of connections for each layer of neurons - 1. Provided: ${neuralNetwork.layers.length} layers of neurons and ${neuralNetwork.connections.length} layers of connections`
+				`Visualizer.#calcDimensionsAndOffsets: The neural network must have at least 2 layers, provided: ${neuralNetwork.length}`
 			);
 		// #endregion
 
 		// Get all the necessary values for the calcNeuronRadius method
-		const layerCount = neuralNetwork.layers.length;
-		const tallestLayerSize = Math.max(...neuralNetwork.layers.map((layer) => layer.length));
+		const layerCount = neuralNetwork.length;
+		const tallestLayerSize = Math.max(...neuralNetwork.map((layer) => layer.length));
 
 		const canvasWidth = canvas.width;
 		const canvasHeight = canvas.height;
 
 		// Calculate the layer distance
-		const layerDistance = this.#calcLayerDistance(layerCount);
+		const layerDistance = this.#calcLayerDistance(canvasWidth, layerCount);
 
 		// Calculate the neuron radius based on the number of layers, the size of the tallest layer and the canvas size
 		const radius = this.#calcNeuronRadius(layerDistance, tallestLayerSize, canvasHeight);
@@ -185,6 +199,7 @@ export default class Visualizer {
 
 		return {
 			neuronRadius: radius,
+			layerDistance,
 
 			horOffset,
 			verOffset,
@@ -193,20 +208,23 @@ export default class Visualizer {
 		};
 	}
 
-	#calcLayerDistance(layerCount: number) {
+	// Calculate the horizontal distance between the layers in pixels, based on the width of the canvas and the number of layers
+	#calcLayerDistance(canvasWidth: number, layerCount: number) {
 		// #region Error handling
 		if (layerCount < 2)
 			throw new Error('Visualizer.#calcLayerDistance: The layer count must be at least 2');
 
 		// #endregion
 
-		return 800 / (layerCount - 1);
+		return canvasWidth / 2 / (layerCount - 1);
 	}
 
+	// Calculate the height of a layer in pixels, based on the number of neurons in the layer and the radius of the neurons
 	#calcLayerHeight(layerSize: number, neuronRadius: number) {
 		return layerSize * neuronRadius * 2 + neuronRadius * (layerSize - 1);
 	}
 
+	// Calculate the radius of the neurons in pixels, based on the number of layers, the size of the tallest layer and the canvas height
 	#calcNeuronRadius(layerDistance: number, tallestLayer: number, canvasHeight: number) {
 		// #region Error handling
 		if (tallestLayer < 1)

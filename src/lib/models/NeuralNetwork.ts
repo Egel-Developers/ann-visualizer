@@ -1,16 +1,6 @@
 import Algorithms from '$lib/models/Algorithms';
 import type SquashingFunction from '$lib/enums/SquashingFunction';
 
-class Neuron {
-	activation = 0;
-	bias: number;
-
-	// Initialize the neuron with a bias
-	constructor(bias = 0) {
-		this.bias = bias;
-	}
-}
-
 class Connection {
 	weight: number;
 
@@ -20,14 +10,20 @@ class Connection {
 	}
 }
 
-export type NeuralNetworkState = {
-	layers: Neuron[][];
-	connections: Connection[][][];
-};
+export class Neuron {
+	activation = 0;
+	bias: number;
+	connections: Connection[] = [];
+
+	// Initialize the neuron with connections and a bias
+	constructor(connections: Connection[], bias = 0) {
+		this.connections = connections;
+		this.bias = bias;
+	}
+}
 
 export default class NeuralNetwork {
 	#layers: Neuron[][] = [];
-	#connections: Connection[][][] = [];
 	#squashingFunction: SquashingFunction;
 
 	// Initialize the neural network with a number of layers and neurons per layer
@@ -36,46 +32,41 @@ export default class NeuralNetwork {
 		this.#squashingFunction = squashingFunction;
 
 		this.#layers = this.#createLayers(layerSizes);
-
-		this.#connections = this.#createConnections(this.#layers);
 	}
 
 	// Get the neural network in its current state
-	getNeuralNetwork(): NeuralNetworkState {
-		return {
-			layers: this.#layers,
-			connections: this.#connections
-		};
+	getNeuralNetwork() {
+		return this.#layers;
 	}
 
 	// Set a specific weight for a connection
 	setWeight(layerIndex: number, neuronIndex: number, connectionIndex: number, weight: number) {
 		// #region Error handling
-		if (layerIndex < 0)
+		if (layerIndex < 1)
 			throw new Error(
-				`NeuralNetwork.setWeight: Layer index out of bounds. Provided index: ${layerIndex}, min index: 0`
+				`NeuralNetwork.setWeight: Layer index out of bounds. Provided index: ${layerIndex}, min index: 1`
 			);
-		if (layerIndex > this.#connections.length - 1)
+		if (layerIndex > this.#layers.length - 1)
 			throw new Error(
 				`NeuralNetwork.setWeight: Layer index out of bounds. Provided index: ${layerIndex}, max index: ${
-					this.#connections.length - 1
+					this.#layers.length - 1
 				}`
 			);
-		if (neuronIndex > this.#connections[layerIndex].length - 1)
+		if (neuronIndex > this.#layers[layerIndex].length - 1)
 			throw new Error(
 				`NeuralNetwork.setWeight: Neuron index out of bounds. Provided index: ${neuronIndex}, max index: ${
-					this.#connections[layerIndex].length - 1
+					this.#layers[layerIndex].length - 1
 				}, in layer: ${layerIndex}`
 			);
-		if (connectionIndex > this.#connections[layerIndex][neuronIndex].length - 1)
+		if (connectionIndex > this.#layers[layerIndex][neuronIndex].connections.length - 1)
 			throw new Error(
 				`NeuralNetwork.setWeight: Connection index out of bounds. Provided index: ${connectionIndex}, max index: ${
-					this.#connections[layerIndex][neuronIndex].length - 1
+					this.#layers[layerIndex][neuronIndex].connections.length - 1
 				}, in layer: ${layerIndex}, for neuron: ${neuronIndex}`
 			);
 		// #endregion
 
-		this.#connections[layerIndex][neuronIndex][connectionIndex].weight = weight;
+		this.#layers[layerIndex][neuronIndex].connections[connectionIndex].weight = weight;
 	}
 
 	// Set a specific bias for a neuron
@@ -148,11 +139,11 @@ export default class NeuralNetwork {
 	// Runs the feed forward algorithm on the neural network and returns the output neurons's activations
 	feedForward() {
 		// Loop over all the layers (start at 1 to skip the input layer)
-		for (let i = 1; i < this.#layers.length; i++) {
+		for (let n = 1; n < this.#layers.length; n++) {
 			// Loop over all the neurons in the current layer
-			for (let j = 0; j < this.#layers[i].length; j++) {
+			for (let j = 0; j < this.#layers[n].length; j++) {
 				// Calculate the activation of the current neuron
-				this.#layers[i][j].activation = this.#calcActivation(i, j);
+				this.#layers[n][j].activation = this.#calcActivation(n, j);
 			}
 		}
 	}
@@ -183,31 +174,34 @@ export default class NeuralNetwork {
 		// Get all activations from the previous layer
 		const prevLayerActivations = this.#layers[layerIndex - 1].map((neuron) => neuron.activation);
 
-		// Get all weights from the connections from the previous layer to this neuron
-		let weights: number[] = [];
+		// Get the neuron
+		const neuron = this.#layers[layerIndex][neuronIndex];
 
-		this.#connections[layerIndex - 1].forEach((connections) => {
-			weights = [...weights, connections[neuronIndex].weight];
-		});
+		// Get all weights from the connections from the previous layer to this neuron
+		const weights = neuron.connections.map((connection) => connection.weight);
 
 		// Get the bias of this neuron
-		const bias = this.#layers[layerIndex][neuronIndex].bias;
+		const bias = neuron.bias;
 
 		// Calculate the activation of this neuron and return it
 		return Algorithms.activation(prevLayerActivations, weights, bias, this.#squashingFunction);
 	}
 
-	// Initialize the layers with neurons of the neural network
+	// Initialize the layers with neurons and their connections of the neural network
 	#createLayers(layerSizes: number[]) {
 		let layers: Neuron[][] = [];
 
 		// Create as many layers as specified
-		for (let i = 0; i < layerSizes.length; i++) {
+		for (let n = 0; n < layerSizes.length; n++) {
 			let layer: Neuron[] = [];
 
 			// Fill each layer with neurons
-			for (let j = 0; j < layerSizes[i]; j++) {
-				layer = [...layer, new Neuron()];
+			for (let j = 0; j < layerSizes[n]; j++) {
+				let connections: Connection[] = [];
+
+				if (n > 0) connections = Array.from({ length: layerSizes[n - 1] }, (_) => new Connection());
+
+				layer = [...layer, new Neuron(connections)];
 			}
 
 			// Append the layer to the layers array
@@ -218,30 +212,30 @@ export default class NeuralNetwork {
 	}
 
 	// Initialize the connections between the layers of the neural network
-	#createConnections(layers: Neuron[][]): Connection[][][] {
-		let connections: Connection[][][] = [];
+	// #createConnections(layers: Neuron[][]): Connection[][][] {
+	// 	let connections: Connection[][][] = [];
 
-		// Loop over all layers except the last one
-		for (let i = 0; i < layers.length - 1; i++) {
-			let layerConnections: Connection[][] = [];
+	// 	// Loop over all layers except the first one
+	// 	for (let n = 1; n < layers.length; n++) {
+	// 		let layerConnections: Connection[][] = [];
 
-			// Loop through all neurons in the current layer
-			for (let j = 0; j < layers[i].length; j++) {
-				let neuronConnections: Connection[] = [];
+	// 		// Loop through all neurons in the current layer
+	// 		for (let j = 0; j < layers[n].length; j++) {
+	// 			let neuronConnections: Connection[] = [];
 
-				// Loop through all neurons in the next layer
-				for (let k = 0; k < layers[i + 1].length; k++) {
-					// Add a connection between the current neuron and the next neuron
-					neuronConnections = [...neuronConnections, new Connection()];
-				}
+	// 			// Loop through all neurons in the previous layer
+	// 			for (let k = 0; k < layers[n - 1].length; k++) {
+	// 				// Add a connection between the current neuron and the previous neuron
+	// 				neuronConnections = [...neuronConnections, new Connection()];
+	// 			}
 
-				layerConnections = [...layerConnections, neuronConnections];
-			}
+	// 			layerConnections = [...layerConnections, neuronConnections];
+	// 		}
 
-			// Append the layerConnections array to the connections array
-			connections = [...connections, layerConnections];
-		}
+	// 		// Append the layerConnections array to the connections array
+	// 		connections = [...connections, layerConnections];
+	// 	}
 
-		return connections;
-	}
+	// 	return connections;
+	// }
 }
