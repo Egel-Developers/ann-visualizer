@@ -1,10 +1,10 @@
 # ann-visualizer
 
-A clean visualization for a single layer and output neuron in an artificial neural network. Change all the parameters using the sidebar and the visualization will update automatically.
+A clean visualization for a simple multilayer perceptron model of an artificial neural network. Change all the parameters using the sidebar and the visualization will update automatically.
 
 # Functionality
 
-The neural network uses the weighted sum, together with a squashing function (the sigmoid function in this case), to calculate the activation of the output neuron.
+The neural network uses the weighted sum, together with an activation function (the sigmoid function in this case), to calculate the activations of the next neurons.
 
 # UI
 
