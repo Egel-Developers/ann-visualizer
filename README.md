@@ -1,4 +1,4 @@
-# activation-function
+# ann-visualizer
 
 A clean visualization for a single layer and output neuron in an artificial neural network. Change all the parameters using the sidebar and the visualization will update automatically.
 
